@@ -83,6 +83,8 @@ class GameState {
         earnedAchievements = earnedAchievements ?? [],
         activeCrisisChains = activeCrisisChains ?? [];
 
+  factory GameState.empty() => GameState();
+
   String get monthName {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',

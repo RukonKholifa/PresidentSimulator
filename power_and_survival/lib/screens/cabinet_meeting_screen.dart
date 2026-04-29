@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/game_state.dart';
 import '../config/theme.dart';
-import '../data/strings_en.dart';
-import '../managers/character_manager.dart';
+import '../models/game_state.dart';
 import '../widgets/advisor_comment_widget.dart';
 
 class CabinetMeetingScreen extends StatelessWidget {
@@ -13,45 +11,60 @@ class CabinetMeetingScreen extends StatelessWidget {
     final state = ModalRoute.of(context)?.settings.arguments as GameState?;
     if (state == null) return const Scaffold(body: Center(child: Text('Error')));
 
-    final charManager = CharacterManager();
-    final activeChars = state.characters.where((c) => c.isActive).toList();
+    final activeChars = state.characters.where((c) => c.isActive).take(5).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text(StringsEn.cabinetMeetingTitle)),
-      body: ListView(
+      appBar: AppBar(title: const Text('Cabinet Meeting')),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Your advisors share their perspectives:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          ...activeChars.map((char) => AdvisorCommentWidget(
-            advisor: char,
-            comment: charManager.getAdvisorComment(char),
-          )),
-          const SizedBox(height: 24),
-          const Text('Loyalty Overview', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.gold)),
-          const SizedBox(height: 8),
-          ...activeChars.map((char) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
-              children: [
-                SizedBox(width: 120, child: Text(charManager.getRoleDisplayName(char.role), style: const TextStyle(fontSize: 12))),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: char.loyalty / 100,
-                      backgroundColor: AppTheme.primaryMid,
-                      valueColor: AlwaysStoppedAnimation(AppTheme.getStatColor(char.loyalty)),
-                      minHeight: 8,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text('${char.loyalty.toStringAsFixed(0)}', style: TextStyle(fontSize: 12, color: AppTheme.getStatColor(char.loyalty))),
-              ],
-            ),
-          )),
-        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Advisor Briefings', style: AppTheme.headerStyle(size: 18)),
+            const SizedBox(height: 12),
+            ...activeChars.map((c) {
+              String advice;
+              if (c.loyalty > 70) {
+                advice = 'Everything is under control, Mr. President. We stand with you.';
+              } else if (c.loyalty < 40) {
+                advice = 'The people are not happy. Perhaps we need to reconsider our approach.';
+              } else {
+                advice = 'The situation is manageable, but we should remain vigilant.';
+              }
+              return AdvisorCommentWidget(
+                advisorName: '${c.name} (${c.role.replaceAll("_", " ")})',
+                comment: advice,
+                icon: Icons.person,
+                accentColor: AppTheme.getStatColor(c.loyalty),
+              );
+            }),
+            const SizedBox(height: 16),
+            Text('Meeting Actions', style: AppTheme.headerStyle(size: 16)),
+            const SizedBox(height: 8),
+            _meetingAction(context, state, 'Rally Cabinet Unity', {'stability': 2.0}),
+            _meetingAction(context, state, 'Demand Loyalty Pledge', {'stability': -1.0}),
+            _meetingAction(context, state, 'Discuss Budget Priorities', {'economy': 1.0}),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _meetingAction(BuildContext context, GameState state, String label, Map<String, double> effects) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: () {
+            for (final e in effects.entries) {
+              state.stats.applyStat(e.key, e.value);
+            }
+            state.stats.clamp();
+            Navigator.pop(context);
+          },
+          child: Text(label),
+        ),
       ),
     );
   }

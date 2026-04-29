@@ -1,100 +1,80 @@
 import 'package:flutter/material.dart';
-import '../models/game_state.dart';
 import '../config/theme.dart';
-import '../data/strings_en.dart';
-import '../utils/random_utils.dart';
+import '../models/game_state.dart';
 
-class TravelCardScreen extends StatefulWidget {
+class TravelCardScreen extends StatelessWidget {
   const TravelCardScreen({super.key});
-
-  @override
-  State<TravelCardScreen> createState() => _TravelCardScreenState();
-}
-
-class _TravelCardScreenState extends State<TravelCardScreen> {
-  String? _result;
 
   @override
   Widget build(BuildContext context) {
     final state = ModalRoute.of(context)?.settings.arguments as GameState?;
     if (state == null) return const Scaffold(body: Center(child: Text('Error')));
 
+    final destinations = [
+      ('United Nations', 'Diplomatic summit with world leaders', {'internationalRelations': 5.0, 'approvalRating': 2.0}),
+      ('Neighboring Capital', 'Strengthen trade relations', {'internationalRelations': 3.0, 'economy': 2.0}),
+      ('Military Ally', 'Sign defense cooperation agreement', {'military': 3.0, 'internationalRelations': 2.0}),
+      ('IMF Headquarters', 'Negotiate debt restructuring', {'debt': -50.0, 'economy': 1.0}),
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: const Text(StringsEn.officialVisit)),
-      body: Padding(
+      appBar: AppBar(title: const Text('Travel Abroad')),
+      body: ListView.separated(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Choose your visit:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            _visitOption('Visit a Rural Province', 'Meet farmers and local leaders to boost rural support.', () {
-              state.stats.happiness += 3;
-              state.stats.approvalRating += 2;
-              state.citizenGroups.farmers += 5;
-              state.stats.treasury -= 20;
-              setState(() => _result = 'You visited a rural province. Farmers appreciated your presence. +3 Happiness, +2 Approval');
-              state.diaryEntries.add('Month ${state.currentMonth}: Official visit to rural province');
-            }),
-            _visitOption('Visit Military Base', 'Inspect troops and show support for the armed forces.', () {
-              state.stats.military += 3;
-              state.citizenGroups.military += 5;
-              state.stats.treasury -= 15;
-              setState(() => _result = 'You inspected military bases. Troops morale improved. +3 Military');
-              state.diaryEntries.add('Month ${state.currentMonth}: Official visit to military base');
-            }),
-            _visitOption('Visit Neighbor Country', 'Diplomatic visit to improve international relations.', () {
-              state.stats.internationalRelations += 5;
-              state.stats.mediaTrust += 2;
-              state.stats.treasury -= 30;
-              final neighbor = state.neighbors.isNotEmpty ? state.neighbors[RandomUtils.nextInt(state.neighbors.length)] : null;
-              if (neighbor != null) neighbor.relationScore = (neighbor.relationScore + 5).clamp(0, 100);
-              setState(() => _result = 'Diplomatic visit successful. International relations improved. +5 Relations');
-              state.diaryEntries.add('Month ${state.currentMonth}: Diplomatic visit abroad');
-            }),
-            if (_result != null) ...[
-              const SizedBox(height: 24),
-              Card(
-                color: AppTheme.success.withValues(alpha: 0.1),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: AppTheme.success),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(_result!, style: const TextStyle(color: AppTheme.success))),
-                    ],
-                  ),
+        itemCount: destinations.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) {
+          final d = destinations[i];
+          return Material(
+            color: AppTheme.cardBackground,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                for (final e in d.$3.entries) {
+                  state.stats.applyStat(e.key, e.value);
+                }
+                state.stats.clamp();
+                state.stats.treasury -= 15;
+                Navigator.pop(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.cardBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.flight, size: 24, color: AppTheme.accent),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(d.$1, style: AppTheme.headerStyle(size: 14)),
+                          Text(d.$2, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            children: d.$3.entries.map((e) {
+                              final positive = e.value > 0;
+                              return Text(
+                                '${e.key} ${positive ? "+" : ""}${e.value.toStringAsFixed(0)}',
+                                style: AppTheme.bodyStyle(size: 9, color: positive ? AppTheme.success : AppTheme.danger),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text('Cost: \$15M', style: AppTheme.bodyStyle(size: 10, color: AppTheme.warning)),
+                  ],
                 ),
               ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _visitOption(String title, String description, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: InkWell(
-        onTap: _result == null ? onTap : null,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.primaryLight),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(description, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

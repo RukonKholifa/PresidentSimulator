@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../models/game_state.dart';
 import '../config/theme.dart';
 import '../config/routes.dart';
-import '../data/strings_en.dart';
+import '../models/game_state.dart';
 import '../data/endings_data.dart';
-import '../managers/save_manager.dart';
 
 class LegacyScreen extends StatelessWidget {
   const LegacyScreen({super.key});
@@ -13,56 +10,71 @@ class LegacyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = ModalRoute.of(context)?.settings.arguments as GameState?;
-    if (state == null) return const Scaffold(body: Center(child: Text('Error')));
-
-    final endingId = state.currentLegacyEnding ?? 'peaceful_transition';
+    final endingId = state?.currentLegacyEnding ?? 'forgotten';
     final ending = EndingsData.getEndingById(endingId);
-    final title = ending?['title'] ?? 'Your Legacy';
-    final text = ending?['text'] ?? 'Your presidency has come to an end.';
 
     return Scaffold(
-      backgroundColor: AppTheme.primaryDark,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
-              const Icon(Icons.auto_stories, size: 60, color: AppTheme.gold)
-                  .animate().fadeIn(duration: 800.ms),
-              const SizedBox(height: 16),
-              Text(StringsEn.legacy, style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary))
-                  .animate().fadeIn(delay: 300.ms),
-              const SizedBox(height: 8),
-              Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.gold), textAlign: TextAlign.center)
-                  .animate().fadeIn(delay: 500.ms),
-              const SizedBox(height: 24),
-              Text(text, style: const TextStyle(fontSize: 14, height: 1.8, color: AppTheme.textSecondary), textAlign: TextAlign.center)
-                  .animate().fadeIn(delay: 800.ms),
-              const SizedBox(height: 32),
-              SizedBox(
+      appBar: AppBar(title: const Text('Your Legacy')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.auto_stories, size: 48, color: AppTheme.accent),
+                  const SizedBox(height: 12),
+                  Text(ending?['title'] ?? 'Unknown Legacy', style: AppTheme.headerStyle(size: 22)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (ending != null)
+              Text(ending['text'] ?? '', style: AppTheme.bodyStyle(size: 13), textAlign: TextAlign.left)
+            else
+              Text('Your presidency fades from memory.', style: AppTheme.bodyStyle(size: 13)),
+            const SizedBox(height: 30),
+            if (state != null) ...[
+              Container(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await SaveManager().saveToHallOfFame({
-                      'name': state.presidentName,
-                      'country': state.countryName,
-                      'months': state.currentMonth,
-                      'approval': state.stats.approvalRating,
-                      'score': state.stats.approvalRating + state.currentMonth,
-                      'ending': endingId,
-                    });
-                    await SaveManager().deleteSave();
-                    if (context.mounted) {
-                      Navigator.pushReplacementNamed(context, AppRoutes.mainMenu);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, padding: const EdgeInsets.symmetric(vertical: 16)),
-                  child: const Text(StringsEn.mainMenu),
+                padding: const EdgeInsets.all(12),
+                decoration: AppTheme.cardDecoration,
+                child: Column(
+                  children: [
+                    Text('Final Stats', style: AppTheme.headerStyle(size: 14)),
+                    const SizedBox(height: 8),
+                    _statRow('Months in Power', '${state.currentMonth}'),
+                    _statRow('Final Approval', '${state.stats.approvalRating.toStringAsFixed(1)}%'),
+                    _statRow('Treasury', '\$${state.stats.treasury.toStringAsFixed(0)}M'),
+                    _statRow('Policies Enacted', '${state.activePolicyIds.length}'),
+                  ],
                 ),
-              ).animate().fadeIn(delay: 1200.ms),
+              ),
             ],
-          ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.mainMenu, (_) => false),
+                child: const Text('Main Menu'),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _statRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppTheme.bodyStyle(size: 12, color: AppTheme.textSecondary)),
+          Text(value, style: AppTheme.bodyStyle(size: 12, weight: FontWeight.w600)),
+        ],
       ),
     );
   }

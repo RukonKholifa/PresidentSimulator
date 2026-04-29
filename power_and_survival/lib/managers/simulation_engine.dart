@@ -115,8 +115,8 @@ class SimulationEngine {
     applyDebtInterest(state);
     applyDynamicStatRelationships(state);
     checkCrisisChainTriggers(state);
-    checkGameOverConditions(state);
     recalculateRiskScores(state);
+    checkGameOverConditions(state);
     checkPromiseDeadlines(state);
     checkMinisterEmbezzlement(state);
     final news = generateMonthlyNews(state);
@@ -357,18 +357,7 @@ class SimulationEngine {
     }
     income -= policyCost;
 
-    // Deduct debt interest
-    double interest = 0;
-    if (state.stats.debt > 0) {
-      if (state.stats.debt > 1000) {
-        interest = state.stats.debt * GameBalance.debtInterestCritical;
-      } else if (state.stats.debt > 500) {
-        interest = state.stats.debt * GameBalance.debtInterestHigh;
-      } else {
-        interest = state.stats.debt * GameBalance.debtInterestNormal;
-      }
-    }
-    income -= interest;
+    // Debt interest is handled separately in applyDebtInterest
 
     state.stats.treasury += income;
   }

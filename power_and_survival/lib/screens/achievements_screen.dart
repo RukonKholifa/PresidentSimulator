@@ -1,62 +1,55 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
-import '../data/strings_en.dart';
-import '../managers/achievement_manager.dart';
+import '../data/achievements_data.dart';
+import '../managers/save_manager.dart';
 
-class AchievementsScreen extends StatefulWidget {
+class AchievementsScreen extends StatelessWidget {
   const AchievementsScreen({super.key});
 
   @override
-  State<AchievementsScreen> createState() => _AchievementsScreenState();
-}
-
-class _AchievementsScreenState extends State<AchievementsScreen> {
-  final AchievementManager _manager = AchievementManager();
-  List<String> _unlocked = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAchievements();
-  }
-
-  Future<void> _loadAchievements() async {
-    final unlocked = await _manager.loadUnlockedAchievements();
-    if (mounted) setState(() => _unlocked = unlocked);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final all = _manager.getAllAchievements();
+    final unlocked = SaveManager().loadAchievements();
+    final all = AchievementsData.allAchievements;
 
     return Scaffold(
-      appBar: AppBar(title: const Text(StringsEn.achievementsTitle)),
+      appBar: AppBar(title: Text('Achievements (${unlocked.length}/${all.length})')),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         itemCount: all.length,
-        itemBuilder: (context, index) {
-          final achievement = all[index];
-          final isUnlocked = _unlocked.contains(achievement.id);
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            color: isUnlocked ? AppTheme.gold.withValues(alpha: 0.1) : AppTheme.cardBackground,
-            child: ListTile(
-              leading: Icon(
-                isUnlocked ? Icons.emoji_events : Icons.lock,
-                color: isUnlocked ? AppTheme.gold : AppTheme.textSecondary,
-              ),
-              title: Text(
-                achievement.title,
-                style: TextStyle(fontWeight: FontWeight.bold, color: isUnlocked ? AppTheme.gold : AppTheme.textPrimary),
-              ),
-              subtitle: Text(
-                achievement.description,
-                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-              ),
-              trailing: Text(
-                isUnlocked ? StringsEn.unlocked : StringsEn.locked,
-                style: TextStyle(fontSize: 10, color: isUnlocked ? AppTheme.success : AppTheme.textSecondary),
-              ),
+        itemBuilder: (context, i) {
+          final a = all[i];
+          final isUnlocked = unlocked.contains(a.id);
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: isUnlocked ? AppTheme.accent : AppTheme.cardBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isUnlocked ? Icons.emoji_events : Icons.lock,
+                  size: 24,
+                  color: isUnlocked ? AppTheme.accent : AppTheme.textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a.title, style: AppTheme.bodyStyle(
+                        size: 13,
+                        weight: FontWeight.w600,
+                        color: isUnlocked ? AppTheme.textPrimary : AppTheme.textSecondary,
+                      )),
+                      Text(a.description, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         },

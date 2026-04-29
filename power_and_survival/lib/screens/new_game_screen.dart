@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../config/routes.dart';
-import '../data/strings_en.dart';
+import '../config/game_balance.dart';
+import '../models/game_state.dart';
+import '../models/country_stats.dart';
+import '../models/citizen_groups.dart';
+import '../models/risk_scores.dart';
+import '../managers/character_manager.dart';
 import '../data/country_traits_data.dart';
-import '../managers/simulation_engine.dart';
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
@@ -14,14 +18,16 @@ class NewGameScreen extends StatefulWidget {
 
 class _NewGameScreenState extends State<NewGameScreen> {
   final _nameController = TextEditingController(text: 'President');
-  final _countryController = TextEditingController(text: 'Republic of Valoria');
+  final _countryController = TextEditingController(text: 'Republic of Valdoria');
   final _partyController = TextEditingController(text: 'Unity Party');
-  String _ideology = 'centrist';
   String _difficulty = 'normal';
+  String _ideology = 'centrist';
   String _countryTrait = 'balanced';
+  String _inheritedCrisis = 'none';
 
-  final _ideologies = ['centrist', 'progressive', 'conservative', 'socialist', 'nationalist', 'libertarian'];
   final _difficulties = ['easy', 'normal', 'hard', 'dictator'];
+  final _ideologies = ['centrist', 'socialist', 'conservative', 'liberal', 'nationalist'];
+  final _crises = ['none', 'economic_collapse', 'civil_unrest', 'corruption_scandal', 'military_tension'];
 
   @override
   void dispose() {
@@ -31,158 +37,137 @@ class _NewGameScreenState extends State<NewGameScreen> {
     super.dispose();
   }
 
+  void _startGame() {
+    final starting = GameBalance.startingStats[_difficulty] ?? GameBalance.startingStats['normal']!;
+    final trait = CountryTraitsData.getStatModifiers(_countryTrait);
+    final stats = CountryStats(
+      economy: starting['economy']! + (trait['economy'] ?? 0),
+      happiness: starting['happiness']! + (trait['happiness'] ?? 0),
+      military: starting['military']! + (trait['military'] ?? 0),
+      corruption: starting['corruption']! + (trait['corruption'] ?? 0),
+      health: starting['health']! + (trait['health'] ?? 0),
+      education: starting['education']! + (trait['education'] ?? 0),
+      crime: starting['crime']! + (trait['crime'] ?? 0),
+      internationalRelations: starting['internationalRelations']! + (trait['internationalRelations'] ?? 0),
+      stability: starting['stability']! + (trait['stability'] ?? 0),
+      mediaTrust: starting['mediaTrust']! + (trait['mediaTrust'] ?? 0),
+      oppositionPower: starting['oppositionPower']! + (trait['oppositionPower'] ?? 0),
+      approvalRating: starting['approvalRating']! + (trait['approvalRating'] ?? 0),
+      treasury: starting['treasury']! + (trait['treasury'] ?? 0),
+      debt: starting['debt']! + (trait['debt'] ?? 0),
+    );
+    stats.clamp();
+
+    final characters = CharacterManager().generateStartingCharacters();
+
+    final state = GameState(
+      presidentName: _nameController.text.trim().isEmpty ? 'President' : _nameController.text.trim(),
+      countryName: _countryController.text.trim().isEmpty ? 'Republic of Valdoria' : _countryController.text.trim(),
+      partyName: _partyController.text.trim().isEmpty ? 'Unity Party' : _partyController.text.trim(),
+      ideology: _ideology,
+      difficulty: _difficulty,
+      countryTrait: _countryTrait,
+      inheritedCrisis: _inheritedCrisis,
+      currentMonth: 1,
+      currentYear: 2025,
+      currentTerm: 1,
+      stats: stats,
+      citizenGroups: CitizenGroups(),
+      riskScores: RiskScores(),
+      characters: characters,
+      budgetAllocation: {
+        'health': 0.15, 'education': 0.12, 'military': 0.12, 'security': 0.10,
+        'infrastructure': 0.12, 'welfare': 0.10, 'reserve': 0.10, 'debt_payment': 0.10,
+        'foreign_affairs': 0.05, 'intelligence': 0.04,
+      },
+      activePolicyIds: [],
+      activePromises: [],
+      neighbors: [],
+      eventHistory: [],
+      decisionHistory: [],
+      newsHistory: [],
+      diaryEntries: [],
+      earnedAchievements: [],
+      activeCrisisChains: [],
+    );
+
+    Navigator.pushReplacementNamed(context, AppRoutes.dashboard, arguments: state);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(StringsEn.createYourPresident)),
+      appBar: AppBar(title: const Text('New Game')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField(StringsEn.presidentName, _nameController, StringsEn.enterPresidentName),
+            Text('President Setup', style: AppTheme.headerStyle(size: 18)),
             const SizedBox(height: 12),
-            _buildTextField(StringsEn.countryName, _countryController, StringsEn.enterCountryName),
-            const SizedBox(height: 12),
-            _buildTextField(StringsEn.partyName, _partyController, StringsEn.enterPartyName),
-            const SizedBox(height: 20),
-            _buildSectionTitle(StringsEn.selectIdeology),
-            Wrap(
-              spacing: 8, runSpacing: 8,
-              children: _ideologies.map((i) => _buildChip(i, _ideology == i, () => setState(() => _ideology = i))).toList(),
-            ),
-            const SizedBox(height: 20),
-            _buildSectionTitle(StringsEn.selectDifficulty),
-            ..._difficulties.map((d) => _buildDifficultyOption(d)),
-            const SizedBox(height: 20),
-            _buildSectionTitle(StringsEn.selectCountryTrait),
-            ...CountryTraitsData.traitIds.map((t) => _buildTraitOption(t)),
-            const SizedBox(height: 32),
+            _field('President Name', _nameController),
+            _field('Country Name', _countryController),
+            _field('Party Name', _partyController),
+            const SizedBox(height: 16),
+            Text('Difficulty', style: AppTheme.headerStyle(size: 16)),
+            const SizedBox(height: 8),
+            _chipSelector(_difficulties, _difficulty, (v) => setState(() => _difficulty = v)),
+            const SizedBox(height: 16),
+            Text('Ideology', style: AppTheme.headerStyle(size: 16)),
+            const SizedBox(height: 8),
+            _chipSelector(_ideologies, _ideology, (v) => setState(() => _ideology = v)),
+            const SizedBox(height: 16),
+            Text('Country Trait', style: AppTheme.headerStyle(size: 16)),
+            const SizedBox(height: 8),
+            _chipSelector(CountryTraitsData.traitIds, _countryTrait, (v) => setState(() => _countryTrait = v)),
+            const SizedBox(height: 16),
+            Text('Inherited Crisis', style: AppTheme.headerStyle(size: 16)),
+            const SizedBox(height: 8),
+            _chipSelector(_crises, _inheritedCrisis, (v) => setState(() => _inheritedCrisis = v)),
+            const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _startGame,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(StringsEn.startGame, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text('BEGIN YOUR PRESIDENCY'),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label, hintText: hint),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
+  Widget _field(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.gold)),
-    );
-  }
-
-  Widget _buildChip(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Chip(
-        label: Text(label.toUpperCase(), style: TextStyle(fontSize: 12, color: selected ? AppTheme.primaryDark : AppTheme.textPrimary)),
-        backgroundColor: selected ? AppTheme.gold : AppTheme.cardBackground,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(labelText: label),
+        style: AppTheme.bodyStyle(),
       ),
     );
   }
 
-  Widget _buildDifficultyOption(String difficulty) {
-    final isSelected = _difficulty == difficulty;
-    final descriptions = {
-      'easy': StringsEn.easyDesc, 'normal': StringsEn.normalDesc,
-      'hard': StringsEn.hardDesc, 'dictator': StringsEn.dictatorDesc,
-    };
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: () => setState(() => _difficulty = difficulty),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: isSelected ? AppTheme.accent : AppTheme.primaryLight),
-            borderRadius: BorderRadius.circular(8),
-            color: isSelected ? AppTheme.accent.withValues(alpha: 0.1) : null,
-          ),
-          child: Row(
-            children: [
-              Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_off, color: isSelected ? AppTheme.accent : AppTheme.textSecondary, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(difficulty.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? AppTheme.accent : AppTheme.textPrimary)),
-                    Text(descriptions[difficulty] ?? '', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Widget _chipSelector(List<String> options, String selected, ValueChanged<String> onSelect) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: options.map((opt) {
+        final isSelected = opt == selected;
+        return ChoiceChip(
+          label: Text(opt.replaceAll('_', ' '), style: AppTheme.bodyStyle(
+            size: 12,
+            color: isSelected ? AppTheme.background : AppTheme.textPrimary,
+          )),
+          selected: isSelected,
+          selectedColor: AppTheme.accent,
+          backgroundColor: AppTheme.cardBackground,
+          side: BorderSide(color: isSelected ? AppTheme.accent : AppTheme.cardBorder),
+          onSelected: (_) => onSelect(opt),
+        );
+      }).toList(),
     );
-  }
-
-  Widget _buildTraitOption(String traitId) {
-    final trait = CountryTraitsData.allTraits[traitId]!;
-    final isSelected = _countryTrait == traitId;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: () => setState(() => _countryTrait = traitId),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: isSelected ? AppTheme.gold : AppTheme.primaryLight),
-            borderRadius: BorderRadius.circular(8),
-            color: isSelected ? AppTheme.gold.withValues(alpha: 0.1) : null,
-          ),
-          child: Row(
-            children: [
-              Icon(isSelected ? Icons.check_circle : Icons.circle_outlined, color: isSelected ? AppTheme.gold : AppTheme.textSecondary, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(trait['name'] as String, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? AppTheme.gold : AppTheme.textPrimary)),
-                    Text(trait['description'] as String, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _startGame() {
-    final engine = SimulationEngine();
-    final state = engine.createNewGame(
-      presidentName: _nameController.text.trim().isEmpty ? 'President' : _nameController.text.trim(),
-      countryName: _countryController.text.trim().isEmpty ? 'Republic' : _countryController.text.trim(),
-      partyName: _partyController.text.trim().isEmpty ? 'Unity Party' : _partyController.text.trim(),
-      ideology: _ideology,
-      difficulty: _difficulty,
-      countryTrait: _countryTrait,
-    );
-    Navigator.pushReplacementNamed(context, AppRoutes.dashboard, arguments: state);
   }
 }

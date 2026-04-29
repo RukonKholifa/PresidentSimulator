@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/game_state.dart';
 import '../config/theme.dart';
-import '../data/strings_en.dart';
+import '../models/game_state.dart';
 
-class PressMeetingScreen extends StatefulWidget {
+class PressMeetingScreen extends StatelessWidget {
   const PressMeetingScreen({super.key});
-
-  @override
-  State<PressMeetingScreen> createState() => _PressMeetingScreenState();
-}
-
-class _PressMeetingScreenState extends State<PressMeetingScreen> {
-  String? _result;
 
   @override
   Widget build(BuildContext context) {
@@ -19,63 +11,50 @@ class _PressMeetingScreenState extends State<PressMeetingScreen> {
     if (state == null) return const Scaffold(body: Center(child: Text('Error')));
 
     final topics = [
-      {'title': 'Economy', 'icon': Icons.trending_up, 'effects': {'economy': 2.0, 'mediaTrust': 3.0, 'approvalRating': 2.0}, 'text': 'You addressed the economy, reassuring markets and citizens.'},
-      {'title': 'Security', 'icon': Icons.shield, 'effects': {'stability': 3.0, 'mediaTrust': 2.0, 'military': 1.0}, 'text': 'You addressed security concerns, boosting public confidence.'},
-      {'title': 'Healthcare', 'icon': Icons.local_hospital, 'effects': {'health': 3.0, 'happiness': 2.0, 'approvalRating': 2.0}, 'text': 'You outlined healthcare improvements, earning public support.'},
-      {'title': 'Education', 'icon': Icons.school, 'effects': {'education': 3.0, 'happiness': 2.0, 'mediaTrust': 2.0}, 'text': 'You committed to education reform, energizing young voters.'},
-      {'title': 'Anti-Corruption', 'icon': Icons.gavel, 'effects': {'corruption': -3.0, 'mediaTrust': 5.0, 'approvalRating': 3.0}, 'text': 'You pledged to fight corruption, winning media praise.'},
+      ('Defend Economic Policy', 'Reassure citizens about the economy', {'approvalRating': 2.0, 'mediaTrust': 3.0, 'oppositionPower': -1.0}),
+      ('Attack Opposition', 'Discredit your political opponents', {'oppositionPower': -3.0, 'mediaTrust': -1.0, 'stability': 1.0}),
+      ('Promise Reform', 'Announce upcoming changes', {'approvalRating': 3.0, 'happiness': 1.0, 'mediaTrust': 1.0}),
+      ('Deny Corruption', 'Deflect scandal allegations', {'corruption': -1.0, 'mediaTrust': -2.0, 'approvalRating': -1.0}),
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text(StringsEn.pressConference)),
-      body: Padding(
+      appBar: AppBar(title: const Text('Press Meeting')),
+      body: ListView.separated(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Select a topic for your press conference:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ...topics.map((topic) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: InkWell(
-                onTap: _result == null ? () {
-                  final effects = topic['effects'] as Map<String, double>;
-                  for (final e in effects.entries) {
-                    state.stats.applyStat(e.key, e.value);
-                  }
-                  state.stats.treasury -= 10;
-                  state.diaryEntries.add('Month ${state.currentMonth}: Press conference on ${topic['title']}');
-                  setState(() => _result = topic['text'] as String);
-                } : null,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppTheme.primaryLight),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(topic['icon'] as IconData, color: AppTheme.accent),
-                      const SizedBox(width: 16),
-                      Text(topic['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+        itemCount: topics.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) {
+          final t = topics[i];
+          return Material(
+            color: AppTheme.cardBackground,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                for (final e in t.$3.entries) {
+                  state.stats.applyStat(e.key, e.value);
+                }
+                state.stats.clamp();
+                Navigator.pop(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.cardBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.$1, style: AppTheme.headerStyle(size: 14)),
+                    const SizedBox(height: 4),
+                    Text(t.$2, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
+                  ],
                 ),
               ),
-            )),
-            if (_result != null) ...[
-              const SizedBox(height: 24),
-              Card(
-                color: AppTheme.info.withValues(alpha: 0.1),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(_result!, style: const TextStyle(color: AppTheme.info)),
-                ),
-              ),
-            ],
-          ],
-        ),
+            ),
+          );
+        },
       ),
     );
   }

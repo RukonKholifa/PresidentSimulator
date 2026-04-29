@@ -3,51 +3,39 @@ import '../config/theme.dart';
 
 class NewsFeedWidget extends StatelessWidget {
   final List<String> headlines;
-  final int maxItems;
 
-  const NewsFeedWidget({
-    super.key,
-    required this.headlines,
-    this.maxItems = 5,
-  });
+  const NewsFeedWidget({super.key, required this.headlines});
 
   @override
   Widget build(BuildContext context) {
-    final displayItems = headlines.length > maxItems
-        ? headlines.sublist(headlines.length - maxItems)
-        : headlines;
+    final recent = headlines.length > 5 ? headlines.sublist(headlines.length - 5) : headlines;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
+    return Container(
+      decoration: AppTheme.cardDecoration,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.newspaper, size: 16, color: AppTheme.accent),
+              const SizedBox(width: 6),
+              Text('Latest News', style: AppTheme.headerStyle(size: 14)),
+            ],
+          ),
+          const Divider(color: AppTheme.cardBorder, height: 16),
+          ...recent.reversed.map((h) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.newspaper, size: 18, color: AppTheme.accent),
-                SizedBox(width: 8),
-                Text('NEWS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.accent)),
+                const Text('• ', style: TextStyle(color: AppTheme.accent, fontSize: 12)),
+                Expanded(child: Text(h, style: AppTheme.bodyStyle(size: 12))),
               ],
             ),
-            const Divider(color: AppTheme.primaryLight),
-            ...displayItems.reversed.map((headline) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('• ', style: TextStyle(color: AppTheme.accent)),
-                  Expanded(
-                    child: Text(
-                      headline,
-                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.3),
-                    ),
-                  ),
-                ],
-              ),
-            )),
-          ],
-        ),
+          )),
+          if (recent.isEmpty) Text('No news yet.', style: AppTheme.bodyStyle(size: 12, color: AppTheme.textSecondary)),
+        ],
       ),
     );
   }

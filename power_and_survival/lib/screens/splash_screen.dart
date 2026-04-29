@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../config/theme.dart';
 import '../config/routes.dart';
-import '../data/strings_en.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,41 +9,51 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeIn;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.mainMenu);
-      }
+      if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.mainMenu);
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryDark,
+      backgroundColor: AppTheme.background,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.account_balance, size: 80, color: AppTheme.gold)
-                .animate().fadeIn(duration: 800.ms).scale(begin: const Offset(0.5, 0.5)),
-            const SizedBox(height: 24),
-            Text(
-              StringsEn.appTitle,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.gold),
-            ).animate().fadeIn(delay: 500.ms, duration: 800.ms),
-            const SizedBox(height: 8),
-            Text(
-              StringsEn.appSubtitle,
-              style: const TextStyle(fontSize: 16, color: AppTheme.textSecondary),
-            ).animate().fadeIn(delay: 800.ms, duration: 800.ms),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(color: AppTheme.accent)
-                .animate().fadeIn(delay: 1000.ms),
-          ],
+        child: FadeTransition(
+          opacity: _fadeIn,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.accent, width: 3),
+                ),
+                child: const Icon(Icons.account_balance, size: 40, color: AppTheme.accent),
+              ),
+              const SizedBox(height: 20),
+              Text('Power & Survival', style: AppTheme.headerStyle(size: 28)),
+              Text('President Simulator', style: AppTheme.bodyStyle(size: 14, color: AppTheme.textSecondary)),
+            ],
+          ),
         ),
       ),
     );

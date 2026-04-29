@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'managers/save_manager.dart';
 import 'app.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -14,5 +15,6 @@ void main() {
       statusBarIconBrightness: Brightness.light,
     ),
   );
+  await SaveManager.initHive();
   runApp(const PowerAndSurvivalApp());
 }

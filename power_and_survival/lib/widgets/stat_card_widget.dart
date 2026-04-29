@@ -17,30 +17,18 @@ class StatCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color ?? AppTheme.accent, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color ?? AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.all(3),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: AppTheme.cardDecoration,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: color ?? AppTheme.accent),
+          const SizedBox(height: 4),
+          Text(value, style: AppTheme.headerStyle(size: 16), textAlign: TextAlign.center),
+          Text(title, style: AppTheme.bodyStyle(size: 10, color: AppTheme.textSecondary), textAlign: TextAlign.center),
+        ],
       ),
     );
   }

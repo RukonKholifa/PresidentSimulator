@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../config/theme.dart';
 
 class WarningBadgeWidget extends StatelessWidget {
@@ -14,34 +13,25 @@ class WarningBadgeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (riskLevel < 60) return const SizedBox.shrink();
+    if (riskLevel < 50) return const SizedBox.shrink();
+
+    final color = riskLevel >= 70 ? AppTheme.danger : AppTheme.warning;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppTheme.danger.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.danger.withValues(alpha: 0.5)),
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.warning_amber, size: 14, color: AppTheme.danger),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppTheme.danger,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Icon(Icons.warning_amber_rounded, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(text, style: AppTheme.bodyStyle(size: 11, weight: FontWeight.w600, color: color)),
         ],
       ),
-    ).animate(onPlay: (controller) => controller.repeat(reverse: true))
-     .fadeIn(duration: 800.ms)
-     .then()
-     .fadeOut(duration: 800.ms);
+    );
   }
 }

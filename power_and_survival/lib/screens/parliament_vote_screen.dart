@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
-import '../models/game_state.dart';
 import '../config/theme.dart';
-import '../data/strings_en.dart';
-import '../managers/policy_manager.dart';
+import '../models/game_state.dart';
+import '../data/policies_data.dart';
+import 'dart:math';
 
 class ParliamentVoteScreen extends StatefulWidget {
   const ParliamentVoteScreen({super.key});
@@ -13,77 +12,105 @@ class ParliamentVoteScreen extends StatefulWidget {
 }
 
 class _ParliamentVoteScreenState extends State<ParliamentVoteScreen> {
-  final PolicyManager _policyManager = PolicyManager();
-  String? _voteResult;
+  late GameState state;
+  bool _initialized = false;
+  String? _selectedPolicyId;
+  bool? _voteResult;
+  double? _votePercent;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      state = ModalRoute.of(context)?.settings.arguments as GameState? ?? GameState.empty();
+      _initialized = true;
+    }
+  }
+
+  void _holdVote() {
+    if (_selectedPolicyId == null) return;
+    final baseSupport = (state.stats.approvalRating + state.stats.stability) / 2;
+    final opposition = state.stats.oppositionPower;
+    final support = baseSupport - opposition * 0.3 + Random().nextDouble() * 10 - 5;
+    final percent = support.clamp(0.0, 100.0);
+    final passed = percent > 50;
+
+    if (passed) {
+      if (!state.activePolicyIds.contains(_selectedPolicyId!)) {
+        state.activePolicyIds.add(_selectedPolicyId!);
+      }
+    } else {
+      state.stats.approvalRating -= 2;
+    }
+
+    setState(() {
+      _votePercent = percent;
+      _voteResult = passed;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final state = ModalRoute.of(context)?.settings.arguments as GameState?;
-    if (state == null) return const Scaffold(body: Center(child: Text('Error')));
-
-    final needsApproval = _policyManager.getAvailablePolicies(state)
-        .where((p) => p.requiresParliament).toList();
+    final pending = PoliciesData.allPolicies
+        .where((p) => p.requiresParliament && !state.activePolicyIds.contains(p.id))
+        .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text(StringsEn.parliamentVote)),
-      body: ListView(
+      appBar: AppBar(title: const Text('Parliament Vote')),
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Parliament', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.gold)),
-                  const SizedBox(height: 8),
-                  Text('Your party holds ${(60 - state.stats.oppositionPower * 0.3).clamp(30, 70).toStringAsFixed(0)}% of seats', style: const TextStyle(color: AppTheme.textSecondary)),
-                  Text('Opposition strength: ${state.stats.oppositionPower.toStringAsFixed(0)}%', style: const TextStyle(color: AppTheme.textSecondary)),
-                ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Propose Legislation', style: AppTheme.headerStyle(size: 18)),
+            const SizedBox(height: 12),
+            if (_voteResult == null) ...[
+              if (pending.isEmpty)
+                Text('No pending legislation.', style: AppTheme.bodyStyle(size: 12, color: AppTheme.textSecondary))
+              else ...[
+                ...pending.map((p) => RadioListTile<String>(
+                  title: Text(p.name, style: AppTheme.bodyStyle(size: 13)),
+                  subtitle: Text(p.description, style: AppTheme.bodyStyle(size: 10, color: AppTheme.textSecondary)),
+                  value: p.id,
+                  groupValue: _selectedPolicyId,
+                  onChanged: (v) => setState(() => _selectedPolicyId = v),
+                  activeColor: AppTheme.accent,
+                )),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _selectedPolicyId != null ? _holdVote : null,
+                    child: const Text('Call Vote'),
+                  ),
+                ),
+              ],
+            ] else ...[
+              Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      _voteResult! ? Icons.check_circle : Icons.cancel,
+                      size: 60,
+                      color: _voteResult! ? AppTheme.success : AppTheme.danger,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _voteResult! ? 'PASSED' : 'REJECTED',
+                      style: AppTheme.headerStyle(size: 24).copyWith(color: _voteResult! ? AppTheme.success : AppTheme.danger),
+                    ),
+                    Text('${_votePercent!.toStringAsFixed(1)}% support', style: AppTheme.bodyStyle(size: 14)),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Continue'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text('Propose a Bill', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          if (needsApproval.isEmpty)
-            const Text('No bills available for parliamentary vote.', style: TextStyle(color: AppTheme.textSecondary)),
-          ...needsApproval.map((policy) => Card(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            child: ListTile(
-              title: Text(policy.name, style: const TextStyle(fontSize: 14)),
-              subtitle: Text('Cost: \$${policy.monthlyCost}/mo', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  final supportBase = 60 - state.stats.oppositionPower * 0.3;
-                  final roll = Random().nextDouble() * 100;
-                  final passed = roll < supportBase;
-                  setState(() {
-                    if (passed) {
-                      policy.parliamentApproved = true;
-                      _policyManager.enactPolicy(state, policy);
-                      _voteResult = '${policy.name} PASSED by parliament!';
-                    } else {
-                      _voteResult = '${policy.name} was REJECTED by parliament.';
-                    }
-                    state.diaryEntries.add('Month ${state.currentMonth}: Parliament vote on ${policy.name} — ${passed ? "Passed" : "Rejected"}');
-                  });
-                },
-                child: const Text('Vote'),
-              ),
-            ),
-          )),
-          if (_voteResult != null) ...[
-            const SizedBox(height: 16),
-            Card(
-              color: _voteResult!.contains('PASSED') ? AppTheme.success.withValues(alpha: 0.1) : AppTheme.danger.withValues(alpha: 0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(_voteResult!, style: TextStyle(color: _voteResult!.contains('PASSED') ? AppTheme.success : AppTheme.danger, fontWeight: FontWeight.bold)),
-              ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

@@ -3,45 +3,30 @@ import '../config/theme.dart';
 
 class NewspaperCardWidget extends StatelessWidget {
   final String headline;
-  final String? subtitle;
+  final String? date;
 
-  const NewspaperCardWidget({
-    super.key,
-    required this.headline,
-    this.subtitle,
-  });
+  const NewspaperCardWidget({super.key, required this.headline, this.date});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(Icons.article, color: AppTheme.textSecondary, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    headline,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle!,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                    ),
-                  ],
-                ],
-              ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: AppTheme.cardDecoration,
+      child: Row(
+        children: [
+          const Icon(Icons.article, size: 18, color: AppTheme.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(headline, style: AppTheme.bodyStyle(size: 12)),
+                if (date != null) Text(date!, style: AppTheme.bodyStyle(size: 10, color: AppTheme.textSecondary)),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
