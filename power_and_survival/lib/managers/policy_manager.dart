@@ -41,13 +41,9 @@ class PolicyManager {
   }
 
   void applyMonthlyPolicyEffects(GameState state) {
-    double totalPolicyCost = 0;
-
     for (final policyId in state.activePolicyIds) {
       final policy = PoliciesData.getPolicyById(policyId);
       if (policy == null) continue;
-
-      totalPolicyCost += policy.monthlyCost;
 
       for (final entry in policy.monthlyEffects.entries) {
         state.stats.applyStat(entry.key, entry.value);
@@ -57,8 +53,7 @@ class PolicyManager {
         state.stats.applyStat(entry.key, entry.value);
       }
     }
-
-    state.stats.treasury -= totalPolicyCost;
+    // Cost deduction is handled by SimulationEngine.applyPolicyEffects
   }
 
   double getTotalPolicyCost(GameState state) {

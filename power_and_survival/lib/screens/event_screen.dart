@@ -3,6 +3,7 @@ import '../models/game_state.dart';
 import '../models/event_model.dart';
 import '../config/routes.dart';
 import '../managers/simulation_engine.dart';
+import '../data/events_data.dart';
 import '../widgets/event_card_widget.dart';
 
 class EventScreen extends StatelessWidget {
@@ -31,7 +32,7 @@ class EventScreen extends StatelessWidget {
               state.currentLegacyEnding = engine.determineLegacyEnding(state);
               Navigator.pushReplacementNamed(context, AppRoutes.gameOver, arguments: state);
             } else if (choice.followUpEventId != null) {
-              final followUp = engine.eventManager.getRandomEvent(state);
+              final followUp = EventsData.getEventById(choice.followUpEventId!);
               if (followUp != null) {
                 Navigator.pushReplacementNamed(context, AppRoutes.event, arguments: {'state': state, 'event': followUp});
               } else {

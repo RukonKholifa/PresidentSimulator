@@ -67,11 +67,11 @@ class GameBalance {
   static const double electionWeightMedia = 0.05;
   static const double electionWinThreshold = 55;
 
-  static const double coupWeightMilitary = 0.30;
-  static const double coupWeightLoyalty = 0.40;
-  static const double coupWeightAmbition = 0.20;
+  static const double coupWeightMilitary = 0.25;
+  static const double coupWeightLoyalty = 0.35;
+  static const double coupWeightAmbition = 0.15;
   static const double coupWeightApproval = 0.10;
-  static const double coupWeightStability = 0.20;
+  static const double coupWeightStability = 0.15;
 
   static const double healthDecayNoFunding = -1.0;
   static const double educationDecayNoFunding = -0.8;
