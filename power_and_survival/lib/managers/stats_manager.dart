@@ -67,9 +67,7 @@ class StatsManager {
     if (militarySpend > 50) state.stats.military += 0.5;
     if (welfareSpend > 30) state.stats.happiness += 0.3;
     if (securitySpend > 30) state.stats.crime -= 0.3;
-    if (debtPayment > 30 && state.stats.debt > 0) {
-      state.stats.debt -= debtPayment * 0.5;
-    }
+    // Debt payment is handled in BudgetManager.processBudget
 
     state.stats.clamp();
   }

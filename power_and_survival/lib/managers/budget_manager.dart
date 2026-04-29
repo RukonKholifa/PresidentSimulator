@@ -1,5 +1,6 @@
 import '../models/game_state.dart';
 import '../config/game_balance.dart';
+import '../data/policies_data.dart';
 
 class BudgetManager {
   static const Map<String, String> budgetCategories = {
@@ -21,6 +22,12 @@ class BudgetManager {
 
   double getMonthlyExpenses(GameState state) {
     double policyCost = 0;
+    for (final policyId in state.activePolicyIds) {
+      final policy = PoliciesData.allPolicies.where((p) => p.id == policyId).toList();
+      if (policy.isNotEmpty) {
+        policyCost += policy.first.monthlyCost;
+      }
+    }
     return policyCost;
   }
 

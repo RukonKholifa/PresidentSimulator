@@ -70,7 +70,7 @@ class RiskCalculator {
       risk += (state.stats.corruption - GameBalance.scandalTriggerCorruption) * 2;
     }
     risk += state.stats.corruption * 0.3;
-    risk += state.stats.mediaTrust * 0.2;
+    risk += (100 - state.stats.mediaTrust) * 0.2;
 
     return risk.clamp(0, 100);
   }

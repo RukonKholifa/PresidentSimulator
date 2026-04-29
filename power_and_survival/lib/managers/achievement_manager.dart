@@ -46,7 +46,7 @@ class AchievementManager {
         return state.stats.education >= 90;
       case 'promise_keeper':
         return state.activePromises.isNotEmpty &&
-            state.activePromises.every((p) => p.isKept || !p.isBroken);
+            state.activePromises.every((p) => p.isKept);
       case 'promise_breaker':
         return state.activePromises.where((p) => p.isBroken).length >= 5;
       case 'survived_coup':
