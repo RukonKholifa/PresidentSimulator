@@ -5,39 +5,41 @@ class ActionButtonWidget extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
-  final Color? color;
+  final bool enabled;
 
   const ActionButtonWidget({
     super.key,
     required this.label,
     required this.icon,
     required this.onTap,
-    this.color,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color ?? AppTheme.primaryLight, width: 1),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color ?? AppTheme.accent, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.5,
+      child: Material(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.cardBorder),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 22, color: AppTheme.accent),
+                const SizedBox(height: 6),
+                Text(label, style: AppTheme.bodyStyle(size: 11, weight: FontWeight.w600), textAlign: TextAlign.center),
+              ],
+            ),
+          ),
         ),
       ),
     );

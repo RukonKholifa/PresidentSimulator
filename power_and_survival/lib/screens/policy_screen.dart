@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/game_state.dart';
 import '../config/theme.dart';
-import '../data/strings_en.dart';
-import '../managers/policy_manager.dart';
+import '../models/game_state.dart';
+import '../data/policies_data.dart';
 
 class PolicyScreen extends StatefulWidget {
   const PolicyScreen({super.key});
@@ -11,116 +10,107 @@ class PolicyScreen extends StatefulWidget {
   State<PolicyScreen> createState() => _PolicyScreenState();
 }
 
-class _PolicyScreenState extends State<PolicyScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final PolicyManager _policyManager = PolicyManager();
+class _PolicyScreenState extends State<PolicyScreen> {
+  late GameState state;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      state = ModalRoute.of(context)?.settings.arguments as GameState? ?? GameState.empty();
+      _initialized = true;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ModalRoute.of(context)?.settings.arguments as GameState?;
-    if (state == null) return const Scaffold(body: Center(child: Text('Error')));
-
-    final active = _policyManager.getActivePolicies(state);
-    final available = _policyManager.getAvailablePolicies(state);
+    final policies = PoliciesData.allPolicies;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(StringsEn.managePolicies),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: '${StringsEn.activePolicies} (${active.length})'),
-            Tab(text: '${StringsEn.availablePolicies} (${available.length})'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          ListView(
-            padding: const EdgeInsets.all(16),
-            children: active.isEmpty
-                ? [const Center(child: Text('No active policies', style: TextStyle(color: AppTheme.textSecondary)))]
-                : active.map((p) => _buildPolicyCard(state, p, isActive: true)).toList(),
-          ),
-          ListView(
-            padding: const EdgeInsets.all(16),
-            children: available.map((p) => _buildPolicyCard(state, p, isActive: false)).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPolicyCard(GameState state, policy, {required bool isActive}) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: Padding(
+      appBar: AppBar(title: const Text('Policies')),
+      body: ListView.builder(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        itemCount: policies.length,
+        itemBuilder: (context, i) {
+          final policy = policies[i];
+          final isActive = state.activePolicyIds.contains(policy.id);
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isActive ? AppTheme.accent : AppTheme.cardBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: Text(policy.name, style: const TextStyle(fontWeight: FontWeight.bold))),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isActive ? AppTheme.success.withValues(alpha: 0.2) : AppTheme.primaryMid,
-                    borderRadius: BorderRadius.circular(8),
+                Row(
+                  children: [
+                    Expanded(child: Text(policy.name, style: AppTheme.headerStyle(size: 14))),
+                    if (isActive)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text('ACTIVE', style: AppTheme.bodyStyle(size: 9, weight: FontWeight.w700, color: AppTheme.accent)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(policy.description, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text('Cost: \$${policy.monthlyCost.toStringAsFixed(0)}/mo', style: AppTheme.bodyStyle(size: 10, color: AppTheme.warning)),
+                    const Spacer(),
+                    if (policy.requiresParliament)
+                      Text('Requires Parliament', style: AppTheme.bodyStyle(size: 10, color: AppTheme.textSecondary)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: policy.monthlyEffects.entries.map((e) {
+                    final positive = e.value > 0;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (positive ? AppTheme.success : AppTheme.danger).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${e.key} ${positive ? "+" : ""}${e.value.toStringAsFixed(1)}',
+                        style: AppTheme.bodyStyle(size: 9, color: positive ? AppTheme.success : AppTheme.danger),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        if (isActive) {
+                          state.activePolicyIds.remove(policy.id);
+                        } else {
+                          state.activePolicyIds.add(policy.id);
+                        }
+                      });
+                    },
+                    child: Text(isActive ? 'Deactivate' : 'Activate'),
                   ),
-                  child: Text(isActive ? 'ACTIVE' : '\$${policy.monthlyCost.toStringAsFixed(0)}/mo', style: TextStyle(fontSize: 10, color: isActive ? AppTheme.success : AppTheme.textSecondary)),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(policy.description, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 4,
-              children: policy.monthlyEffects.entries.map<Widget>((e) => Chip(
-                label: Text('${e.key}: ${e.value > 0 ? '+' : ''}${e.value.toStringAsFixed(1)}', style: TextStyle(fontSize: 10, color: e.value > 0 ? AppTheme.success : AppTheme.danger)),
-                backgroundColor: AppTheme.primaryMid,
-                visualDensity: VisualDensity.compact,
-              )).toList(),
-            ),
-            if (policy.requiresParliament) ...[
-              const SizedBox(height: 4),
-              const Text('Requires Parliament Approval', style: TextStyle(fontSize: 10, color: AppTheme.warning)),
-            ],
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    if (isActive) {
-                      _policyManager.repealPolicy(state, policy);
-                    } else {
-                      _policyManager.enactPolicy(state, policy);
-                    }
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isActive ? AppTheme.danger : AppTheme.success,
-                ),
-                child: Text(isActive ? StringsEn.repealPolicy : StringsEn.enactPolicy),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

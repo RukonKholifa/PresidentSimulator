@@ -15,37 +15,44 @@ class RiskBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pct = (value / 100).clamp(0.0, 1.0);
     final color = AppTheme.getRiskColor(value);
-    final normalizedValue = (value / 100).clamp(0.0, 1.0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: Text(label, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 90,
+            child: Text(label, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
           ),
           Expanded(
-            flex: 3,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: normalizedValue,
-                backgroundColor: AppTheme.primaryMid,
-                valueColor: AlwaysStoppedAnimation<Color>(color),
-                minHeight: 6,
+            child: Container(
+              height: 10,
+              decoration: BoxDecoration(
+                color: AppTheme.cardBorder,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: pct,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           SizedBox(
-            width: 32,
+            width: 28,
             child: Text(
               '${value.toStringAsFixed(0)}%',
-              style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold),
+              style: AppTheme.bodyStyle(size: 10, weight: FontWeight.w600, color: color),
               textAlign: TextAlign.right,
             ),
           ),

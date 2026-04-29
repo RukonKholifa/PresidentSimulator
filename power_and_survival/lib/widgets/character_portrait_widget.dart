@@ -1,85 +1,116 @@
 import 'package:flutter/material.dart';
 import '../models/character.dart';
 import '../config/theme.dart';
-import '../data/characters_data.dart';
 
 class CharacterPortraitWidget extends StatelessWidget {
   final Character character;
   final VoidCallback? onTap;
+  final bool showWarning;
 
   const CharacterPortraitWidget({
     super.key,
     required this.character,
     this.onTap,
+    this.showWarning = true,
   });
+
+  IconData _roleIcon() {
+    return switch (character.role) {
+      'army_chief' => Icons.military_tech,
+      'finance_minister' => Icons.account_balance,
+      'intelligence_chief' => Icons.visibility,
+      'interior_minister' => Icons.security,
+      'foreign_minister' => Icons.public,
+      'health_minister' => Icons.local_hospital,
+      'education_minister' => Icons.school,
+      'media_director' => Icons.campaign,
+      'business_tycoon' => Icons.business,
+      'opposition_leader' => Icons.front_hand,
+      _ => Icons.person,
+    };
+  }
+
+  bool get _hasDanger =>
+      character.loyalty < 35 ||
+      character.ambition > 70 ||
+      character.monthsDisloyal > 2 ||
+      character.currentDemands.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     final loyaltyColor = AppTheme.getStatColor(character.loyalty);
-    final roleName = CharactersData.roleDisplayNames[character.role] ?? character.role;
 
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: loyaltyColor.withValues(alpha: 0.2),
-                child: Icon(
-                  _getRoleIcon(character.role),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _hasDanger && showWarning ? AppTheme.danger.withValues(alpha: 0.6) : AppTheme.cardBorder,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: loyaltyColor, width: 3),
+                    color: AppTheme.background,
+                  ),
+                  child: Icon(_roleIcon(), size: 22, color: AppTheme.textPrimary),
+                ),
+                if (_hasDanger && showWarning)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.danger,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.priority_high, size: 10, color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              character.name.split(' ').first,
+              style: AppTheme.bodyStyle(size: 11, weight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              character.role.replaceAll('_', ' '),
+              style: AppTheme.bodyStyle(size: 9, color: AppTheme.textSecondary),
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: 40,
+              height: 4,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: (character.loyalty / 100).clamp(0.0, 1.0),
+                  backgroundColor: AppTheme.cardBorder,
                   color: loyaltyColor,
-                  size: 28,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                character.name,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                roleName,
-                style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.favorite, size: 12, color: loyaltyColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    character.loyalty.toStringAsFixed(0),
-                    style: TextStyle(fontSize: 11, color: loyaltyColor),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  IconData _getRoleIcon(String role) {
-    return switch (role) {
-      'vice_president' => Icons.account_balance,
-      'army_chief' => Icons.military_tech,
-      'finance_minister' => Icons.attach_money,
-      'intelligence_chief' => Icons.visibility,
-      'interior_minister' => Icons.security,
-      'foreign_minister' => Icons.public,
-      'media_advisor' => Icons.campaign,
-      'party_leader' => Icons.groups,
-      'business_tycoon' => Icons.business,
-      'student_leader' => Icons.school,
-      _ => Icons.person,
-    };
   }
 }
