@@ -119,6 +119,7 @@ class SimulationEngine {
     checkGameOverConditions(state);
     checkPromiseDeadlines(state);
     checkMinisterEmbezzlement(state);
+    _replaceInactiveCharacters(state);
     final news = generateMonthlyNews(state);
     final diary = generateDiaryEntry(state);
     _advanceMonthCounter(state);
@@ -760,6 +761,25 @@ class SimulationEngine {
       'Month $month: Met with advisors to discuss the path forward. No easy answers, but I\'m determined to leave this country better than I found it.',
     ];
     return templates[_random.nextInt(templates.length)];
+  }
+
+  // ================================================================
+  // CHARACTER REPLACEMENT — fired/arrested get replaced within 1 month
+  // ================================================================
+
+  void _replaceInactiveCharacters(GameState state) {
+    final usedNames = state.characters.map((c) => c.name).toSet();
+    for (int i = 0; i < state.characters.length; i++) {
+      if (!state.characters[i].isActive) {
+        final oldRole = state.characters[i].role;
+        final replacement = characterManager.generateReplacementCharacter(oldRole, usedNames);
+        usedNames.add(replacement.name);
+        state.characters[i] = replacement;
+        state.diaryEntries.add(
+          'Month ${state.currentMonth}: Appointed ${replacement.name} as new ${oldRole}.',
+        );
+      }
+    }
   }
 
   // ================================================================
