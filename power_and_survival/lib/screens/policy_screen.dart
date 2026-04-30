@@ -96,6 +96,12 @@ class _PolicyScreenState extends State<PolicyScreen> {
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () {
+                      if (!isActive && policy.requiresParliament && !policy.parliamentApproved) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('This policy requires Parliament approval first. Use the Parliament Vote screen.')),
+                        );
+                        return;
+                      }
                       setState(() {
                         if (isActive) {
                           state.activePolicyIds.remove(policy.id);
@@ -104,7 +110,7 @@ class _PolicyScreenState extends State<PolicyScreen> {
                         }
                       });
                     },
-                    child: Text(isActive ? 'Deactivate' : 'Activate'),
+                    child: Text(isActive ? 'Deactivate' : (!isActive && policy.requiresParliament && !policy.parliamentApproved ? 'Needs Parliament' : 'Activate')),
                   ),
                 ),
               ],

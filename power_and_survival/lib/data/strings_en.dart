@@ -183,6 +183,7 @@ class StringsEn {
   static const String resetProgress = 'Reset Progress';
   static const String about = 'About';
   static const String version = 'Version 1.0';
+  static const String createdBy = 'Created By MD Rukon Kholifa';
 
   // Diary
   static const String presidentialDiary = 'Presidential Diary';

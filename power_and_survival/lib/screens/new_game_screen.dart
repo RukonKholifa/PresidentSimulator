@@ -7,6 +7,7 @@ import '../models/country_stats.dart';
 import '../models/citizen_groups.dart';
 import '../models/risk_scores.dart';
 import '../managers/character_manager.dart';
+import '../models/neighbor_country.dart';
 import '../data/country_traits_data.dart';
 
 class NewGameScreen extends StatefulWidget {
@@ -77,12 +78,17 @@ class _NewGameScreenState extends State<NewGameScreen> {
       characters: characters,
       budgetAllocation: {
         'health': 0.15, 'education': 0.12, 'military': 0.12, 'security': 0.10,
-        'infrastructure': 0.12, 'welfare': 0.10, 'reserve': 0.10, 'debt_payment': 0.10,
+        'infrastructure': 0.12, 'welfare': 0.10, 'reserve': 0.10, 'debtPayment': 0.10,
         'foreign_affairs': 0.05, 'intelligence': 0.04,
       },
       activePolicyIds: [],
       activePromises: [],
-      neighbors: [],
+      neighbors: [
+        NeighborCountry(id: 'north', name: 'Nordland', governmentType: 'Democracy', relationScore: 60, militaryStrength: 'high', economicStrength: 'high'),
+        NeighborCountry(id: 'east', name: 'Eastmark', governmentType: 'Authoritarian', relationScore: 40, militaryStrength: 'medium', economicStrength: 'medium'),
+        NeighborCountry(id: 'south', name: 'Southvale', governmentType: 'Democracy', relationScore: 55, militaryStrength: 'low', economicStrength: 'low'),
+        NeighborCountry(id: 'west', name: 'Westreach', governmentType: 'Monarchy', relationScore: 50, militaryStrength: 'medium', economicStrength: 'high'),
+      ],
       eventHistory: [],
       decisionHistory: [],
       newsHistory: [],

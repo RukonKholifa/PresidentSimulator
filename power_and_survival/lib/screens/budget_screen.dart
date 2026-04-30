@@ -21,7 +21,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     ('infrastructure', 'Infrastructure', Icons.construction),
     ('welfare', 'Welfare', Icons.people),
     ('reserve', 'Media & Reserve', Icons.campaign),
-    ('debt_payment', 'Debt Payment', Icons.money_off),
+    ('debtPayment', 'Debt Payment', Icons.money_off),
     ('foreign_affairs', 'Foreign Affairs', Icons.public),
     ('intelligence', 'Intelligence', Icons.visibility),
   ];

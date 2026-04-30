@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../config/routes.dart';
+import '../data/strings_en.dart';
 import '../managers/save_manager.dart';
 
 class MainMenuScreen extends StatelessWidget {
@@ -57,6 +58,8 @@ class MainMenuScreen extends StatelessWidget {
                 _menuButton(context, 'Settings', Icons.settings, () {
                   Navigator.pushNamed(context, AppRoutes.settings);
                 }),
+                const SizedBox(height: 24),
+                Text(StringsEn.createdBy, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
               ],
             ),
           ),

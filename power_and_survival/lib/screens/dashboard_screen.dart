@@ -43,16 +43,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
       actionsRemaining = 3;
     });
 
+    if (state.isGameOver) {
+      state.currentLegacyEnding = engine.determineLegacyEnding(state);
+      Navigator.pushNamed(context, AppRoutes.gameOver, arguments: state);
+      return;
+    }
+
+    if (engine.electionManager.isElectionTime(state)) {
+      Navigator.pushNamed(context, AppRoutes.election, arguments: state).then((_) {
+        if (mounted) setState(() {});
+      });
+      return;
+    }
+
     final event = engine.getMonthlyEvent(state);
     if (event != null && mounted) {
-      Navigator.pushNamed(context, AppRoutes.event, arguments: {'state': state, 'event': event});
+      Navigator.pushNamed(context, AppRoutes.event, arguments: {'state': state, 'event': event}).then((_) {
+        if (mounted) setState(() {});
+      });
+    } else if (mounted) {
+      Navigator.pushNamed(context, AppRoutes.monthlyReport, arguments: state).then((_) {
+        if (mounted) setState(() {});
+      });
     }
   }
 
   void _useAction(String route, [Object? args]) {
     if (actionsRemaining <= 0) return;
     setState(() => actionsRemaining--);
-    Navigator.pushNamed(context, route, arguments: args ?? state);
+    Navigator.pushNamed(context, route, arguments: args ?? state).then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
