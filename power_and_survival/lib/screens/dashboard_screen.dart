@@ -45,7 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (state.isGameOver) {
       state.currentLegacyEnding = engine.determineLegacyEnding(state);
-      Navigator.pushNamed(context, AppRoutes.gameOver, arguments: state);
+      Navigator.pushReplacementNamed(context, AppRoutes.gameOver, arguments: state);
       return;
     }
 
