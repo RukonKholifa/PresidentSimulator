@@ -106,6 +106,27 @@ class CharacterManager {
     );
   }
 
+  Character generateReplacementCharacter(String role, Set<String> usedNames) {
+    final name = _generateUniqueName(usedNames);
+    final ranges = CharactersData.roleStatRanges[role] ??
+        {'loyalty': [40.0, 70.0], 'influence': [30.0, 60.0], 'ambition': [30.0, 60.0], 'corruption': [20.0, 50.0], 'relationship': [40.0, 60.0]};
+    final hiddenTrait = RandomUtils.pick(CharactersData.hiddenTraits);
+    final faction = CharactersData.roleFactions[role] ?? 'neutral';
+
+    return Character(
+      id: role,
+      name: name,
+      role: role,
+      loyalty: RandomUtils.range(ranges['loyalty']![0], ranges['loyalty']![1]),
+      influence: RandomUtils.range(ranges['influence']![0], ranges['influence']![1]),
+      ambition: RandomUtils.range(ranges['ambition']![0], ranges['ambition']![1]),
+      corruption: RandomUtils.range(ranges['corruption']![0], ranges['corruption']![1]),
+      relationship: RandomUtils.range(ranges['relationship']![0], ranges['relationship']![1]),
+      hiddenTrait: hiddenTrait,
+      factionId: faction,
+    );
+  }
+
   String getRoleDisplayName(String role) {
     return CharactersData.roleDisplayNames[role] ?? role;
   }

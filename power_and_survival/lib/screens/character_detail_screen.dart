@@ -22,7 +22,7 @@ class _CharacterDetailScreenState extends State<CharacterDetailScreen> {
     if (!_initialized) {
       final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       state = args?['state'] as GameState? ?? GameState.empty();
-      character = args?['character'] as Character? ?? state.characters.first;
+      character = args?['character'] as Character? ?? (state.characters.isNotEmpty ? state.characters.first : Character(id: 'unknown', name: 'Unknown', role: 'unknown'));
       _initialized = true;
     }
   }

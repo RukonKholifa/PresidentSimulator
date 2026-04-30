@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../config/routes.dart';
+import '../data/strings_en.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -52,6 +53,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               const SizedBox(height: 20),
               Text('Power & Survival', style: AppTheme.headerStyle(size: 28)),
               Text('President Simulator', style: AppTheme.bodyStyle(size: 14, color: AppTheme.textSecondary)),
+              const SizedBox(height: 24),
+              Text(StringsEn.createdBy, style: AppTheme.bodyStyle(size: 11, color: AppTheme.textSecondary)),
             ],
           ),
         ),
